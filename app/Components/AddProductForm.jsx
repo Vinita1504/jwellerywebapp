@@ -4,8 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import {usePictures} from '@/context/Pictures';
-import {uploadImages} from '../services/firebase_storage_service.js'
+import { usePictures } from '@/context/Pictures';
+import { uploadImages } from '../services/firebase_storage_service.js'
 import ErrorDialogue from './ErrorDialogue.jsx';
 import SuccessDialogue from './SuccessDialogue.jsx';
 import LoadingDialogue from './LoadingDialogue.jsx';
@@ -20,64 +20,66 @@ const AddProduct = () => {
     quantityAvailable: "1",
     availabilityStatus: 'In Stock',
     makingCharges: "0",
-    
+    gender: "Male",
+    collection: "New Arrivals",
+
   }
 
   const { register, handleSubmit, formState: { errors }, setValue } = useForm({
     resolver: zodResolver(productSchema),
-    defaultValues:defaultProductValues
+    defaultValues: defaultProductValues
   });
 
   const usePictureState = usePictures();
-  const { saveProduct, saveStatus, resetSaveStatus,setErrorState,setSavingStatus } = useSaveProduct();
+  const { saveProduct, saveStatus, resetSaveStatus, setErrorState, setSavingStatus } = useSaveProduct();
 
-  const resetForm = ()=>{
+  const resetForm = () => {
     // reload the page
     window.location.reload()
-  } 
+  }
 
-  const savePictures = async ()=>{
-    if(usePictureState.pictures.length === 0){
+  const savePictures = async () => {
+    if (usePictureState.pictures.length === 0) {
       throw new Error("Please upload at least one image")
     }
-    const images = usePictureState.pictures.map((image)=>{
-      return {productId:setValue('productId'),file:image}
+    const images = usePictureState.pictures.map((image) => {
+      return { productId: setValue('productId'), file: image }
     })
     const urls = await uploadImages(images);
     return urls;
   }
 
   const onSubmit = async (data) => {
-      try {
-        setSavingStatus("Saving product...")
-        const urls = await savePictures();
-        data.productImages = urls;
+    try {
+      setSavingStatus("Saving product...")
+      const urls = await savePictures();
+      data.productImages = urls;
 
-        data.productId = uuidv4()
-        await saveProduct(data);
+      data.productId = uuidv4()
+      await saveProduct(data);
 
-        // resetForm()
-      } catch (error) {
-        setErrorState(error.message || "An error occurred while saving the product");
-      }
+      // resetForm()
+    } catch (error) {
+      setErrorState(error.message || "An error occurred while saving the product");
+    }
   };
 
 
- 
 
 
-  
+
+
 
   return (
     <div className=" mx-auto p-6 bg-white/70 shadow-md rounded-lg">
       <h2 className="text-2xl mb-6">Add New Product</h2>
 
-     <LoadingDialogue isLoading={saveStatus.isLoading} message={saveStatus.loadingMessage} />
-     <ErrorDialogue isError={saveStatus.isError} errorMessage={saveStatus.errorMessage} onReload={resetSaveStatus} />
-     <SuccessDialogue open={saveStatus.isSuccess} message={saveStatus.successMessage} onClose= {()=>{resetSaveStatus();resetForm()}} />
-    
+      <LoadingDialogue isLoading={saveStatus.isLoading} message={saveStatus.loadingMessage} />
+      <ErrorDialogue isError={saveStatus.isError} errorMessage={saveStatus.errorMessage} onReload={resetSaveStatus} />
+      <SuccessDialogue open={saveStatus.isSuccess} message={saveStatus.successMessage} onClose={() => { resetSaveStatus(); resetForm() }} />
 
-     {/* {saveStatus.isSuccess && <p>Success {saveStatus.successMessage}</p>}
+
+      {/* {saveStatus.isSuccess && <p>Success {saveStatus.successMessage}</p>}
      {saveStatus.isError && <p>Error {saveStatus.errorMessage}</p>} */}
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -271,6 +273,7 @@ const AddProduct = () => {
             />
             {errors.taxDetails && <p className="text-red-500 text-sm mt-1">{errors.taxDetails.message}</p>}
           </div>
+          {/* Availability Status */}
           <div>
             <label className="block text-sm font-medium mb-1">Availability Status</label>
             <select
@@ -282,6 +285,46 @@ const AddProduct = () => {
             </select>
             {errors.availabilityStatus && <p className="text-red-500 text-sm mt-1">{errors.availabilityStatus.message}</p>}
           </div>
+
+          {/* Product Belongs to this collection */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Collection</label>
+            <select
+              {...register('collection')}
+              className="w-full px-4 py-2 border rounded-md"
+            >
+              <option value="New Arrivals">New Arrivals</option>
+              <option value="Engagement">Engagement</option>
+              <option value="Wedding Rings">Wedding Rings</option>
+              <option value="Fine Jewellery">Fine Jewellery</option>
+              <option value="Bracelets">Bracelets</option>
+              <option value="Earrings">Earrings</option>
+              <option value="Bangles">Bangles</option>
+              <option value="Pendants">Pendants</option>
+              <option value="Rings">Rings</option>
+              <option value="Other">Other</option>
+            </select>
+            {errors.collection && <p className="text-red-500 text-sm mt-1">{errors.collection.message}</p>}
+          </div>
+
+        </div>
+
+        {/* This product belogs to selected gender */}
+        <div className="grid grid-cols-2 gap-8 mb-6">
+        <div>
+            <label className="block text-sm font-medium mb-1">Gender</label>
+            <select
+              {...register('gender')}
+              className="w-full px-4 py-2 border rounded-md"
+            >
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Child">Child</option>
+              <option value="Unisex">Unisex</option>
+            </select>
+            {errors.collection && <p className="text-red-500 text-sm mt-1">{errors.gender.message}</p>}
+          </div>
+
         </div>
 
         {/* Certification & Warranty */}
