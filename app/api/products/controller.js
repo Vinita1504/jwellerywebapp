@@ -66,24 +66,27 @@ export async function getProducts(reqCount, limit, category, subCategory, sortBy
 
     let sortOption = {};
     if (sortBy === 'Price-LTH') {
-      sortOption = { price: 1 };
+      sortOption = { sellingPrice: 1 };
     } else if (sortBy === 'Price-HTL') {
-      sortOption = { price: -1 };
+      sortOption = { sellingPrice: -1 };
     } else {
-      // Default sort by popularity (assuming there's a 'popularity' field)
-      sortOption = { popularity: -1 };
+      // Default sort by createdAt
+      sortOption = { createdAt: -1 };
     }
 
     const products = await ProductModel.find(query)
       .sort(sortOption)
       .skip(reqCount * limit)
       .limit(limit);
-      
+
+    if (!products) {
+      throw new Error('No products found');
+    }
 
     return products;
   } catch (error) {
     console.error('Error fetching products:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -174,3 +177,53 @@ export async function searchProducts(query) {
     return [];
   }
 }
+
+export async function browseProducts(reqCount, limit, filters) {
+  try {
+    let query = [];
+
+    if (filters.length > 0) {
+      query.push({ category: filters });
+      query.push({ subCategory: filters });
+      query.push({ metalType: filters });
+      query.push({ gender: filters });
+      query.push({ collection: filters });
+      query.push({ availabilityStatus: filters });
+    }
+
+    await dbConnect();
+    const skip = reqCount * limit;
+    
+
+    const products = await ProductModel.find(query.length > 0 ? { $or: query } : {})
+      .skip(skip)
+      .limit(limit);
+    return products;
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
+}
+
+export async function countProductsBasedOnFilters(filters) {
+  try {
+    let query = [];
+    if (filters.length > 0) {
+      query.push({ category: filters });
+      query.push({ subCategory: filters });
+      query.push({ metalType: filters });
+      query.push({ gender: filters });
+      query.push({ collection: filters });
+      query.push({ availabilityStatus: filters });
+    }
+    await dbConnect();
+    const counts = await ProductModel.countDocuments(query.length > 0 ? { $or: query } : {})
+    return counts;
+  } catch (e) {
+    console.log(e);
+    return 0;
+  }
+}
+
+
+
